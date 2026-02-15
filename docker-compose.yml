@@ -6,11 +6,11 @@ services:
       dockerfile: Dockerfile
     image: ib_mcp_api_gateway:v0.1
     ports:
-      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+      - "127.0.0.1:${GATEWAY_PORT}:${GATEWAY_PORT}"
     env_file:
       - .env
     environment:
-      - XX:XX
+      - SSL_PASSWORD=${SSL_PASSWORD:-mywebapi}
       # - GATEWAY_INTERNAL_BASE_URL=${GATEWAY_INTERNAL_BASE_URL}
       # - GATEWAY_PORT=${GATEWAY_PORT}
       # - GATEWAY_ENDPOINT=${GATEWAY_ENDPOINT}
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile
     image: ib_mcp_mcp_server:v0.0
     ports:
-      - "${MCP_SERVER_PORT}:${MCP_SERVER_PORT}"
+      - "127.0.0.1:${MCP_SERVER_PORT}:${MCP_SERVER_PORT}"
     env_file:
       - .env
     environment:

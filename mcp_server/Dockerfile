@@ -17,9 +17,6 @@ COPY pyproject.toml ./
 # Copy the entire mcp_server directory
 COPY . /app/mcp_server
 
-# Debug: List files to verify server.py is copied
-RUN ls -la /app/mcp_server/
-
 # Set PYTHONPATH to include the /app directory
 ENV PYTHONPATH=/app
 
@@ -37,6 +34,10 @@ ENV MCP_SERVER_HOST=""
 ENV MCP_TRANSPORT_PROTOCOL=""
 ENV MCP_SERVER_BASE_URL=""
 ENV MCP_SERVER_INTERNAL_BASE_URL=""
+
+# Create non-root user and set ownership
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
 
 # Expose the port (if needed for health checks)
 EXPOSE ${MCP_SERVER_PORT}

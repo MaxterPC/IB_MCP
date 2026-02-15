@@ -1,5 +1,8 @@
 import os
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Add routers path
 # Load routers path and inject into sys.path
@@ -7,7 +10,7 @@ ROUTERS_PATH = os.environ.get("ROUTERS_PATH")
 if os.path.isdir(ROUTERS_PATH):
     sys.path.insert(0, ROUTERS_PATH)
 else:
-    print(f"⚠️ Warning: ROUTERS_PATH '{ROUTERS_PATH}' does not exist.")
+    logger.warning("ROUTERS_PATH '%s' does not exist.", ROUTERS_PATH)
 
 
 # Load environment variables
@@ -20,24 +23,43 @@ MCP_SERVER_INTERNAL_BASE_URL = os.environ.get("MCP_SERVER_INTERNAL_BASE_URL")
 MCP_SERVER_HOST = os.environ.get("MCP_SERVER_HOST")
 MCP_TRANSPORT_PROTOCOL = os.environ.get("MCP_TRANSPORT_PROTOCOL")
 MCP_SERVER_PORT = os.environ.get("MCP_SERVER_PORT")
+MCP_SERVER_LOG_LEVEL = os.environ.get("MCP_SERVER_LOG_LEVEL", "info")
+
+# SSL verification: set to path of CA cert file, or "false" to disable (insecure)
+SSL_VERIFY = os.environ.get("SSL_VERIFY", "false")
 
 INCLUDED_TAGS = os.getenv("INCLUDED_TAGS")
 EXCLUDED_TAGS = os.getenv("EXCLUDED_TAGS")
-print(EXCLUDED_TAGS)
 
 # Add validation and type conversion for MCP_SERVER_PORT
 if not MCP_SERVER_PORT:
-    print("Error: MCP_SERVER_PORT environment variable is not set.")
+    logger.error("MCP_SERVER_PORT environment variable is not set.")
     sys.exit(1)
 try:
     MCP_SERVER_PORT = int(MCP_SERVER_PORT)
 except ValueError:
-    print("Error: MCP_SERVER_PORT must be a valid integer.")
+    logger.error("MCP_SERVER_PORT must be a valid integer.")
     sys.exit(1)
 
 
 BASE_URL = f"{GATEWAY_INTERNAL_BASE_URL}:{GATEWAY_PORT}{GATEWAY_ENDPOINT}"
-print("BASE_URL:", BASE_URL)
+
+
+def get_ssl_verify():
+    """Return the SSL verify parameter for httpx.
+
+    - If SSL_VERIFY is a file path, return that path (CA cert bundle).
+    - If SSL_VERIFY is 'false', return False (insecure, for development only).
+    - Otherwise, return True (default system CA bundle).
+    """
+    if SSL_VERIFY.lower() == "false":
+        return False
+    if SSL_VERIFY.lower() == "true":
+        return True
+    if os.path.isfile(SSL_VERIFY):
+        return SSL_VERIFY
+    logger.warning("SSL_VERIFY='%s' is not a valid file path. Falling back to True.", SSL_VERIFY)
+    return True
 
 # Create FastAPI object description based on filters
 base_description = """

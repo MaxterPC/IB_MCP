@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Any
 import httpx
 from pydantic import BaseModel, Field
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -58,7 +59,7 @@ async def place_order(
     """
     Places one or more orders for the specified account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/{accountId}/orders",
@@ -68,9 +69,9 @@ async def place_order(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -86,7 +87,7 @@ async def preview_order(
     """
     Previews an order to see its potential impact on the account before placing it.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/{accountId}/orders/whatif",
@@ -96,9 +97,9 @@ async def preview_order(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -115,7 +116,7 @@ async def modify_order(
     """
     Modifies an existing active order. The request body should contain the updated order details.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/{accountId}/order/{orderId}",
@@ -125,9 +126,9 @@ async def modify_order(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.delete(
@@ -143,7 +144,7 @@ async def cancel_order(
     """
     Cancels an active order by its ID.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.delete(
                 f"{BASE_URL}/iserver/account/{accountId}/order/{orderId}",
@@ -152,9 +153,9 @@ async def cancel_order(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -170,7 +171,7 @@ async def place_order_reply(
     """
     Confirms an order that requires a secondary confirmation (e.g., due to price or size constraints).
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/reply/{replyId}",
@@ -180,6 +181,6 @@ async def place_order_reply(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

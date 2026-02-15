@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 import httpx
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -17,15 +18,15 @@ async def sso_validate():
     """
     Validates the session for a Single Sign-On (SSO) user.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/sso/validate", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/auth/status",
@@ -37,15 +38,15 @@ async def get_auth_status():
     """
     Checks the current authentication status, including connection status, any competing sessions, and server info.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/auth/status", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/reauthenticate",
@@ -57,15 +58,15 @@ async def reauthenticate():
     """
     When the session has been idle for a long time, it may expire. This endpoint can be used to re-authenticate the session.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/iserver/reauthenticate", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/logout",
@@ -77,15 +78,15 @@ async def logout():
     """
     Terminates the current brokerage session.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/logout", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/tickle",
@@ -97,12 +98,12 @@ async def tickle():
     """
     Pings the gateway to keep the session alive and check for connectivity.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/tickle", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

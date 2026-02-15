@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Union, Optional
 import httpx
 from pydantic import BaseModel, Field
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -115,16 +116,16 @@ async def get_marketdata_snapshot(
     Fetches a snapshot of market data. This endpoint is called twice internally to ensure data retrieval.
     """
     params = {"conids": conids, "fields": fields}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             await client.get(f"{BASE_URL}/iserver/marketdata/snapshot", params=params, timeout=10)
             response = await client.get(f"{BASE_URL}/iserver/marketdata/snapshot", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/md/snapshot",
@@ -139,15 +140,15 @@ async def get_md_snapshot(
     params = {"conids": conids}
     if fields:
         params["fields"] = fields
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/md/snapshot", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -175,15 +176,15 @@ async def get_marketdata_history(
         params["exchange"] = exchange
     if barType:
         params["barType"] = barType
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/marketdata/history", params=params, timeout=20)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -214,16 +215,16 @@ async def get_hmds_history(
         params["barType"] = barType
     if startTime:
         params["startTime"] = startTime
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             await client.get(f"{BASE_URL}/hmds/auth/init", timeout=10)
             response = await client.get(f"{BASE_URL}/hmds/history", params=params, timeout=30)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/marketdata/unsubscribe",
@@ -232,15 +233,15 @@ async def get_hmds_history(
     description="Unsubscribes from a specific market data feed."
 )
 async def unsubscribe_market_data(body: UnsubscribeRequest = Body(...)):
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/iserver/marketdata/unsubscribe", json=body.dict(), timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -250,12 +251,12 @@ async def unsubscribe_market_data(body: UnsubscribeRequest = Body(...)):
     description="Unsubscribes from all current market data subscriptions."
 )
 async def unsubscribe_all_market_data():
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/iserver/marketdata/unsubscribeall", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

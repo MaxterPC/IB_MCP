@@ -3,6 +3,7 @@ from fastapi import APIRouter, Query, Path
 from typing import Optional
 import httpx
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -33,15 +34,15 @@ async def get_live_orders(
     if force:
         params["force"] = str(force).lower()
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/orders", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -56,15 +57,15 @@ async def get_order_status(
     """
     Fetches the latest status for a specific order. This is useful for tracking the lifecycle of an individual order.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/order/status/{orderId}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -83,12 +84,12 @@ async def get_trades(
     if days:
         params["days"] = days
         
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/trades", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

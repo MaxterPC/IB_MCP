@@ -182,3 +182,7 @@ openapi.json
 
 #
 .docs/
+
+# Claude Code (local settings, session data)
+.claude/
+CLAUDE.md

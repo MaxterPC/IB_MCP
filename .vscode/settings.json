@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Tomorrow Night Blue",
+    "workbench.colorTheme": "Default Dark Modern",
     "containers.containerClient": "com.microsoft.visualstudio.containers.docker",
     "chat.mcp.discovery.enabled": {
         "claude-desktop": true,

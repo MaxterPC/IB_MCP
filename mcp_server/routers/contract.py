@@ -4,6 +4,7 @@ from typing import List, Optional
 import httpx
 from pydantic import BaseModel, Field, ConfigDict
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -49,15 +50,15 @@ async def get_contract_algos(
     if addParams:
         params["addParams"] = addParams
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/contract/{conid}/algos", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/contract/{conid}/info-and-rules",
@@ -73,15 +74,15 @@ async def get_contract_info_and_rules(
     Retrieves a combination of contract details and associated trading rules in a single call.
     """
     params = {"isBuy": isBuy}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/contract/{conid}/info-and-rules", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -96,15 +97,15 @@ async def get_contract_info(
     """
     Retrieves detailed information about a specific contract using its conid.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/contract/{conid}/info", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/secdef/bond-filters",
@@ -122,15 +123,15 @@ async def get_bond_filters(
         "symbol": "BOND",
         "issuerId": issuerId
     }
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/secdef/bond-filters", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/secdef/currency",
@@ -145,15 +146,15 @@ async def search_currency_pairs(
     Retrieves information about a currency pair. Corresponds to the user's request for /iserver/currency/pairs.
     """
     params = {"symbol": symbol}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/secdef/currency", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/secdef/info",
@@ -182,15 +183,15 @@ async def get_secdef_info(
     if right:
         params["right"] = right
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/secdef/info", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/secdef/search",
@@ -212,15 +213,15 @@ async def search_contract_by_symbol_or_name(
     if secType:
         params["secType"] = secType
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/secdef/search", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/contract/rules",
@@ -232,7 +233,7 @@ async def get_contract_rules(body: ContractRulesRequest = Body(...)):
     """
     Fetches the trading rules for a given contract, such as order types and sizes.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/contract/rules",
@@ -242,9 +243,9 @@ async def get_contract_rules(body: ContractRulesRequest = Body(...)):
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/secdef/strikes",
@@ -265,15 +266,15 @@ async def get_strikes(
     if exchange:
         params["exchange"] = exchange
         
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/secdef/strikes", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/trsrv/futures",
@@ -288,15 +289,15 @@ async def get_trsrv_futures_by_symbol(
     Get detailed information about futures contracts for given symbols.
     """
     params = {"symbols": symbols}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/trsrv/futures", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/trsrv/secdef",
@@ -311,15 +312,15 @@ async def get_secdef_by_conids(
     Retrieves security definitions for one or more contracts.
     """
     params = {"conids": conids}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/trsrv/secdef", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/trsrv/stocks",
@@ -334,15 +335,15 @@ async def get_stocks_by_symbol(
     Fetches stock contracts for a list of symbols. This is more direct than a general search if you know you are looking for stocks.
     """
     params = {"symbols": symbols}
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/trsrv/stocks", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/trsrv/secdef/schedule",
@@ -365,12 +366,12 @@ async def get_trading_schedule(
     if exchangeFilter:
         params["exchangeFilter"] = exchangeFilter
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/trsrv/secdef/schedule", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

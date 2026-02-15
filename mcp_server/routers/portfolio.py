@@ -4,6 +4,7 @@ from typing import List, Optional
 import httpx
 from pydantic import BaseModel, Field
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -26,15 +27,15 @@ async def get_portfolio_accounts():
     """
     Fetches the list of available portfolio accounts.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/accounts", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/portfolio/subaccounts",
@@ -46,15 +47,15 @@ async def get_portfolio_subaccounts():
     """
     Retrieves a list of subaccounts for the portfolio, primarily for tiered account structures.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/subaccounts", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/portfolio/subaccounts2",
@@ -66,7 +67,7 @@ async def get_portfolio_subaccounts_large():
     """
     Retrieves a list of subaccounts for large portfolio structures.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             # Note: The documentation suggests this might be a GET, but a POST with a body might be needed in practice for large lists.
             # Assuming GET based on the doc for now.
@@ -74,9 +75,9 @@ async def get_portfolio_subaccounts_large():
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -91,15 +92,15 @@ async def get_account_meta(
     """
     Fetches metadata for a specific portfolio account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/meta", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -114,15 +115,15 @@ async def get_account_allocation(
     """
     Fetches portfolio allocation for a single specified account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/allocation", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -137,15 +138,15 @@ async def get_combo_positions(
     """
     Retrieves combination positions (e.g., complex options strategies) for an account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/combo/positions", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -158,7 +159,7 @@ async def get_all_accounts_allocation(body: AccountAllocationRequest = Body(...)
     """
     Fetches combined portfolio allocation for a list of specified accounts.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/portfolio/allocation",
@@ -168,9 +169,9 @@ async def get_all_accounts_allocation(body: AccountAllocationRequest = Body(...)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -200,15 +201,15 @@ async def get_positions(
     if period:
         params["period"] = period
         
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/positions/{pageId}", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -224,15 +225,15 @@ async def get_position_by_conid(
     """
     Retrieves all positions for a specific contract within a given account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{acctId}/position/{conid}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -247,15 +248,15 @@ async def invalidate_portfolio_cache(
     """
     Clears the cached portfolio data on the server side for the specified account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/portfolio/{accountId}/positions/invalidate", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -270,15 +271,15 @@ async def get_account_summary(
     """
     Fetches a summary of the specified account's portfolio.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/summary", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -293,15 +294,15 @@ async def get_account_ledger(
     """
     Retrieves the ledger for a specific account, showing cash balances and other financial details.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/{accountId}/ledger", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -316,12 +317,12 @@ async def get_all_positions_by_conid(
     """
     Fetches all positions for a given contract ID across all portfolio accounts.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/portfolio/positions/{conid}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

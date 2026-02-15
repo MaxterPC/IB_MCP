@@ -4,6 +4,7 @@ from typing import List, Optional
 import httpx
 from pydantic import BaseModel, Field
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -31,15 +32,15 @@ async def get_watchlists():
     """
     Retrieves all watchlists associated with the current user's account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/watchlists", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/iserver/account/watchlist/{watchlistId}",
@@ -53,15 +54,15 @@ async def get_watchlist_contracts(
     """
     Retrieves all contracts within a specific watchlist.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/watchlist/{watchlistId}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/account/{accountId}/watchlist",
@@ -76,7 +77,7 @@ async def create_watchlist(
     """
     Creates a new watchlist for the specified account with an optional list of initial contracts.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/{accountId}/watchlist",
@@ -86,9 +87,9 @@ async def create_watchlist(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/account/watchlist/{watchlistId}/contract",
@@ -107,7 +108,7 @@ async def add_contracts_to_watchlist(
     # The API might expect a single `conid` key. If this call fails, adjust the model and this call accordingly.
     # For now, we assume a more flexible `conids` list can be handled or that the first element is used.
     # A safer single-conid implementation would be: `json={"conid": body.conids[0]}` if only one is allowed.
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/watchlist/{watchlistId}/contract",
@@ -117,9 +118,9 @@ async def add_contracts_to_watchlist(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.delete(
     "/iserver/account/watchlist/{watchlistId}",
@@ -133,15 +134,15 @@ async def delete_watchlist(
     """
     Deletes an entire watchlist by its ID.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.delete(f"{BASE_URL}/iserver/account/watchlist/{watchlistId}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.delete(
     "/iserver/account/watchlist/{watchlistId}/contract/{conid}",
@@ -156,12 +157,12 @@ async def delete_contract_from_watchlist(
     """
     Removes a single contract from a specified watchlist.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.delete(f"{BASE_URL}/iserver/account/watchlist/{watchlistId}/contract/{conid}", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

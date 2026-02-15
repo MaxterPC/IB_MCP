@@ -2,9 +2,11 @@
 from fastapi import APIRouter, Body
 from fastapi.responses import Response
 from typing import List, Optional, Any
+from xml.etree.ElementTree import Element, SubElement, tostring
 import httpx
 from pydantic import BaseModel, Field, ConfigDict
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -77,16 +79,16 @@ async def get_scanner_params():
     """
     Retrieves the iServer scanner parameters as an XML file. This information is needed to correctly configure an iServer scanner request.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/scanner/params", timeout=10)
             response.raise_for_status()
             # Return the raw XML content with the correct media type
             return Response(content=response.text, media_type="application/xml")
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/scanner/run",
@@ -99,18 +101,22 @@ async def run_scanner(body: ScannerSubscription = Body(...)):
     Submits an iServer scanner configuration and returns the results.
     The JSON request body will be converted to the required XML format.
     """
-    # Build the XML string from the Pydantic model
-    xml_string = f"<ScannerSubscription><instrument>{body.instrument}</instrument><type>{body.type}</type><locationCode>{body.locationCode}</locationCode>"
+    # Build the XML safely using ElementTree to prevent XML injection
+    root = Element("ScannerSubscription")
+    SubElement(root, "instrument").text = body.instrument
+    SubElement(root, "type").text = body.type
+    SubElement(root, "locationCode").text = body.locationCode
     if body.filter:
-        xml_string += "<filter>"
+        filter_el = SubElement(root, "filter")
         for item in body.filter:
-            xml_string += f"<item><name>{item.name}</name><value>{item.value}</value></item>"
-        xml_string += "</filter>"
-    xml_string += "</ScannerSubscription>"
+            item_el = SubElement(filter_el, "item")
+            SubElement(item_el, "name").text = str(item.name)
+            SubElement(item_el, "value").text = str(item.value)
+    xml_string = tostring(root, encoding="unicode")
 
     headers = {"Content-Type": "application/xml"}
 
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/scanner/run",
@@ -121,9 +127,9 @@ async def run_scanner(body: ScannerSubscription = Body(...)):
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/hmds/scanner",
@@ -139,7 +145,7 @@ async def run_hmds_scanner(body: HmdsScannerRequest = Body(...)):
 
     The request body should be a JSON object specifying the scanner parameters.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             # Initialize HMDS session to prevent 404 error on the first call
             # This is a prerequisite for all /hmds endpoints.
@@ -155,6 +161,6 @@ async def run_hmds_scanner(body: HmdsScannerRequest = Body(...)):
             scanner_response.raise_for_status()
             return scanner_response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

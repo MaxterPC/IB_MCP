@@ -4,22 +4,18 @@
 
 echo "[tickler] Tickler service started."
 
-# The 'while true' loop ensures the script runs indefinitely,
-# continuously sending requests to the tickle endpoint.
+# Determine SSL flags: use CA cert if available, otherwise fall back to -k (insecure)
+CURL_SSL_FLAGS="-k"
+if [ -n "$GATEWAY_CA_CERT" ] && [ -f "$GATEWAY_CA_CERT" ]; then
+  CURL_SSL_FLAGS="--cacert $GATEWAY_CA_CERT"
+  echo "[tickler] Using CA certificate: $GATEWAY_CA_CERT"
+fi
+
 while true; do
-  NOW=$(date) # Get the current timestamp
-  # Log the action, including the current time and the target URL.
+  NOW=$(date)
   echo "[tickler] $NOW: Sending tickle to ${TICKLE_BASE_URL}${TICKLE_ENDPOINT}"
 
-  # Send a POST request using curl.
-  # -s: Silent mode
-  # -k: Allow insecure server connections (if needed)
-  # -X POST: Specify POST request method
-  # -H "Content-Type: application/json": Set the Content-Type header
-  # -d "{}": Send an empty JSON object as data
-  # -w " HTTP status: %{http_code}\n": Output the HTTP status code after the request
-  curl -sk -X POST "${TICKLE_BASE_URL}${TICKLE_ENDPOINT}" -H "Content-Type: application/json" -d "{}" -w " HTTP status: %{http_code}\n"
+  curl -s $CURL_SSL_FLAGS -X POST "${TICKLE_BASE_URL}${TICKLE_ENDPOINT}" -H "Content-Type: application/json" -d "{}" -w " HTTP status: %{http_code}\n"
 
-  # Pause execution for the duration specified by TICKLE_INTERVAL.
   sleep "${TICKLE_INTERVAL}"
 done

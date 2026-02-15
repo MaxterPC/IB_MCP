@@ -14,7 +14,6 @@ dependencies = [
     "httpx==0.28.1",
     "urllib3==2.5.0",
     "mcp==1.10.1",
-    "asyncio==3.4.3",
     "aiohttp==3.12.13",
 ]
 

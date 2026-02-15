@@ -4,6 +4,7 @@ from typing import List, Optional, Any
 import httpx
 from pydantic import BaseModel, Field, ConfigDict
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -70,15 +71,15 @@ async def get_alerts(
     """
     Retrieves all alerts associated with a given account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/{accountId}/alerts", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -94,7 +95,7 @@ async def create_or_modify_alert(
     """
     Creates a new alert or modifies an existing one for the specified account.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/{accountId}/alert",
@@ -104,9 +105,9 @@ async def create_or_modify_alert(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.delete(
@@ -122,7 +123,7 @@ async def delete_alert(
     """
     Deletes a specific alert by its ID.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.delete(
                 f"{BASE_URL}/iserver/account/{accountId}/alert/{alertId}",
@@ -131,9 +132,9 @@ async def delete_alert(
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -146,15 +147,15 @@ async def get_mta_alert():
     """
     Fetches the Mobile Trading Assistant (MTA) alert for the current user.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/iserver/account/mta", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/iserver/account/alert/activate",
@@ -166,7 +167,7 @@ async def activate_deactivate_alert(body: AlertActivationRequest = Body(...)):
     """
     Toggles the active status of an alert.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(
                 f"{BASE_URL}/iserver/account/alert/activate",
@@ -176,6 +177,6 @@ async def activate_deactivate_alert(body: AlertActivationRequest = Body(...)):
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

@@ -1,8 +1,9 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastmcp import FastMCP
 from fastmcp.server.openapi import RouteMap, MCPType
-from mcp_server.config import MCP_SERVER_HOST, MCP_SERVER_PORT, MCP_TRANSPORT_PROTOCOL, FINAL_DESCRIPTION, EXCLUDED_TAGS_SET
+from mcp_server.config import MCP_SERVER_HOST, MCP_SERVER_PORT, MCP_SERVER_LOG_LEVEL, MCP_TRANSPORT_PROTOCOL, FINAL_DESCRIPTION, EXCLUDED_TAGS_SET
+from mcp_server.auth import verify_api_key
 
 # Import Router Files
 import alerts
@@ -23,7 +24,8 @@ import watchlists
 app = FastAPI(
     title="IBKR API",
     description=FINAL_DESCRIPTION,
-    version="1.0.0"
+    version="1.0.0",
+    dependencies=[Depends(verify_api_key)],
 )
 
 app.include_router(alerts.router)
@@ -58,5 +60,5 @@ if __name__ == "__main__":
         transport=MCP_TRANSPORT_PROTOCOL,
         host=MCP_SERVER_HOST,
         port=MCP_SERVER_PORT,
-        log_level="DEBUG",
+        log_level=MCP_SERVER_LOG_LEVEL,
     )

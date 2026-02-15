@@ -4,6 +4,7 @@ from typing import List, Optional
 import httpx
 from pydantic import BaseModel, Field, ConfigDict
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -44,15 +45,15 @@ async def get_fyi_unread_number():
     """
     Retrieves the count of unread notifications.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/fyi/unreadnumber", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.get(
     "/fyi/deliveryoptions",
@@ -64,15 +65,15 @@ async def get_fyi_delivery_options():
     """
     Fetches the available FYI delivery options.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/fyi/deliveryoptions", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -85,15 +86,15 @@ async def configure_fyi_delivery_options(body: DeliveryOptionsRequest = Body(...
     """
     Enables or disables a specific FYI delivery option.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/fyi/deliveryoptions", json=body.dict(), timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.put(
@@ -106,15 +107,15 @@ async def configure_device_delivery_options(body: DeviceDeliveryOptionsRequest =
     """
     Configures FYI notifications for a specific device.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.put(f"{BASE_URL}/fyi/deliveryoptions/device", json=body.dict(), timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.post(
@@ -127,15 +128,15 @@ async def get_fyi_settings(body: FYISettingsGetRequest = Body(...)):
     """
     Retrieves the settings for a list of disclaimer type notifications.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.post(f"{BASE_URL}/fyi/settings", json=body.dict(), timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.put(
@@ -151,15 +152,15 @@ async def configure_fyi_setting(
     """
     Enables or disables a specific FYI setting by its type code.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.put(f"{BASE_URL}/fyi/settings/{typecode}", json=body.dict(), timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.delete(
@@ -173,7 +174,7 @@ async def mark_notifications_as_read(body: MarkReadRequest = Body(...)):
     Marks one or more notifications as read by their IDs.
     Note: The documentation specifies using a DELETE method with a request body.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             # Using request to handle DELETE with body, as httpx.delete doesn't directly support it.
             request = client.build_request("DELETE", f"{BASE_URL}/fyi/notifications", json=body.dict())
@@ -181,9 +182,9 @@ async def mark_notifications_as_read(body: MarkReadRequest = Body(...)):
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 
 @router.get(
@@ -206,12 +207,12 @@ async def get_notifications(
     if include:
         params["include"] = include
         
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/fyi/notifications", params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)

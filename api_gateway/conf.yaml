@@ -6,7 +6,7 @@ listenSsl: true
 ccp: false
 svcEnvironment: "v1"
 sslCert: "vertx.jks"
-sslPwd: "mywebapi"
+sslPwd: "SSL_PASSWORD_PLACEHOLDER"
 #sslCert: "cacert.jks"
 #sslPwd: "abc123"
 authDelay: 3000
@@ -18,7 +18,7 @@ serverOptions:
     maxWorkerExecuteTime: 100
     internalBlockingPoolSize: 20
 cors:
-    origin.allowed: "*"
+    origin.allowed: "https://localhost"
     allowCredentials: false
 webApps:
     - name: "demo"

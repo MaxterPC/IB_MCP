@@ -4,6 +4,7 @@ from typing import List
 import httpx
 from pydantic import BaseModel, Field, ConfigDict
 from mcp_server.config import BASE_URL
+from mcp_server.http_client import create_client, handle_http_error, handle_request_error
 
 router = APIRouter()
 
@@ -48,15 +49,15 @@ async def get_fa_groups():
     """
     Retrieves all FA groups for the advisor. These groups are used for trade allocation.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             response = await client.get(f"{BASE_URL}/fa/groups", timeout=10)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
 
 @router.post(
     "/fa/groups",
@@ -68,7 +69,7 @@ async def create_fa_group(body: FAGroup = Body(...)):
     """
     Creates a new FA group with a specified allocation method and accounts.
     """
-    async with httpx.AsyncClient(verify=False) as client:
+    async with create_client() as client:
         try:
             # The API documentation implies the list of accounts is sent directly as the body.
             # We'll structure it based on the Pydantic model, which aligns with common REST practices.
@@ -82,6 +83,6 @@ async def create_fa_group(body: FAGroup = Body(...)):
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
-            return {"error": "IBKR API Error", "status_code": exc.response.status_code, "detail": exc.response.text}
+            return handle_http_error(exc)
         except httpx.RequestError as exc:
-            return {"error": "Request Error", "detail": str(exc)}
+            return handle_request_error(exc)
