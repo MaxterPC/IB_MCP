@@ -16,6 +16,7 @@ import options_chains
 import order_monitoring
 import orders
 import portfolio
+import portfolio_analyst
 import scanner
 import session
 import watchlists
@@ -38,6 +39,7 @@ app.include_router(options_chains.router)
 app.include_router(order_monitoring.router)
 app.include_router(orders.router)
 app.include_router(portfolio.router)
+app.include_router(portfolio_analyst.router)
 app.include_router(scanner.router)
 app.include_router(session.router)
 app.include_router(watchlists.router)

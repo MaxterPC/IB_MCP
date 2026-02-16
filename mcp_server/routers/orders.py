@@ -33,6 +33,16 @@ class OrderModel(BaseModel):
     useAdaptive: Optional[bool] = Field(False, description="Set to true to use the Price Management Algo.")
     strategy: Optional[str] = Field(None, description="The IB Algo strategy to use.")
     strategyParameters: Optional[Dict[str, Any]] = Field(None, description="A dictionary of parameters for the specified IB Algo strategy.")
+    trailingAmt: Optional[float] = Field(None, description="Trailing amount for TRAIL/TRAILLMT orders. Absolute value if trailingType='amt', percentage if trailingType='%'.")
+    trailingType: Optional[str] = Field(None, description="Trailing offset type: 'amt' for absolute amount or '%' for percentage. Required for TRAIL/TRAILLMT orders.")
+    isSingleGroup: Optional[bool] = Field(None, description="Set to true to create an OCA (One-Cancels-All) group with other orders in the same request.")
+    cashQty: Optional[float] = Field(None, description="Cash quantity for the order. Used for crypto market orders (BUY with cash amount).")
+    fxQty: Optional[float] = Field(None, description="Foreign exchange quantity for forex orders.")
+    isCurrencyConversion: Optional[bool] = Field(None, description="Set to true for currency conversion orders.")
+    goodTillDate: Optional[str] = Field(None, description="Expiration date/time for GTD orders. Format: YYYYMMDD-HH:MM:SS.")
+    goodAfterTime: Optional[str] = Field(None, description="Order becomes active after this date/time. Format: YYYYMMDD-HH:MM:SS.")
+    isClose: Optional[bool] = Field(None, description="Set to true to indicate this order closes an existing position.")
+    referrer: Optional[str] = Field(None, description="Custom order reference label for tracking purposes.")
 
 
 class OrdersRequest(BaseModel):

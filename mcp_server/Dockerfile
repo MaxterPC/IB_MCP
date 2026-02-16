@@ -36,7 +36,7 @@ ENV MCP_SERVER_BASE_URL=""
 ENV MCP_SERVER_INTERNAL_BASE_URL=""
 
 # Create non-root user and set ownership
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app /tmp/uv-cache
 USER appuser
 
 # Expose the port (if needed for health checks)

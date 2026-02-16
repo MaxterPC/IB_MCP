@@ -40,7 +40,7 @@ RUN chmod +x /app/tickler.sh
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user and set ownership
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 5055
